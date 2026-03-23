@@ -5,11 +5,34 @@ const addButton = document.getElementById("addButton");
 const taskList = document.getElementById("taskList");
 const STORAGE_KEY = "todoTasksV1";
 
+function getStorage() {
+  // Prefer localStorage, but some Safari privacy settings block it.
+  try {
+    const testKey = "__todo_test__";
+    window.localStorage.setItem(testKey, "1");
+    window.localStorage.removeItem(testKey);
+    return window.localStorage;
+  } catch (e) {
+    // Fallback keeps tasks through refresh for the current tab/session.
+    try {
+      const testKey = "__todo_test__";
+      window.sessionStorage.setItem(testKey, "1");
+      window.sessionStorage.removeItem(testKey);
+      return window.sessionStorage;
+    } catch {
+      return null;
+    }
+  }
+}
+
+const store = getStorage();
+
 let tasks = loadTasks();
 
 function loadTasks() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!store) return [];
+    const raw = store.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch (error) {
     return [];
@@ -17,7 +40,8 @@ function loadTasks() {
 }
 
 function saveTasks() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+  if (!store) return;
+  store.setItem(STORAGE_KEY, JSON.stringify(tasks));
 }
 
 function renderTasks() {
